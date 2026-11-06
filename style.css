@@ -159,3 +159,6 @@ body.hide-zero tr.is-zero + tr.subrow { display: none; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   tr.is-zero { display: none; }
 }
+
+button.fill { padding: 1px 6px; font-size: 12px; line-height: 1.2; border-color: var(--input-line); background: var(--input-bg); }
+.hint { }
