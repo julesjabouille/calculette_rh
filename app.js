@@ -173,10 +173,15 @@
   async function commit(key, value) {
     const r = current();
     if (!r) return;
-    r[key] = value; // mise à jour optimiste
+    const fields = { [key]: value };
+    // l'indice de pension suit l'indice majoré tant qu'il est vide ou identique
+    if (key === 'IndiceRem' && 'IndicePC' in r && (!r.IndicePC || r.IndicePC === r.IndiceRem)) {
+      fields.IndicePC = value;
+    }
+    Object.assign(r, fields); // mise à jour optimiste
     setStatus('Enregistrement…', 'busy');
     try {
-      await S.grist.getTable().update({ id: r.id, fields: { [key]: value } });
+      await S.grist.getTable().update({ id: r.id, fields });
       setStatus('✓ Enregistré dans Grist', 'ok');
     } catch (e) {
       setStatus('Erreur : ' + (e && e.message ? e.message : e), 'err');
@@ -405,6 +410,14 @@
     inp.autocomplete = 'off';
     wrapper.append(inp);
     addUnit(wrapper, spec);
+    if (spec.fillFrom) {
+      const btn = el('button', 'fill', '↤');
+      btn.type = 'button';
+      btn.title = 'Reprendre la valeur de l’indice majoré';
+      btn.addEventListener('click', () => { const r = current(); if (r) commit(key, r[spec.fillFrom]); });
+      wrapper.append(btn);
+      ui.updaters.push((r) => { btn.hidden = !r[spec.fillFrom] || r[spec.fillFrom] === r[key]; });
+    }
     td.append(wrapper);
     ui.inputs.push(inp);
 
