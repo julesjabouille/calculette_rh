@@ -255,7 +255,11 @@
       const cells = [];
       const lab = el('td', 'c-label');
       lab.append(el('span', 'lab', ln.label));
-      if (ln.hint) lab.append(el('small', 'hint', ln.hint));
+      if (typeof ln.hint === 'function') {
+        const h = el('small', 'hint');
+        lab.append(h);
+        ui.updaters.push((r, b) => { h.textContent = ln.hint(r, b); });
+      } else if (ln.hint) lab.append(el('small', 'hint', ln.hint));
       tr.append(lab);
       let hasInput = false;
       const vals = [];
