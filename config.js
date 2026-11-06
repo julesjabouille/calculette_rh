@@ -27,8 +27,10 @@
   const n = (x) => (typeof x === 'number' && isFinite(x) ? x : 0);
   const eur = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   // assiette mensuelle = points × valeur du point × quotité
-  const assiette = (pts) => (r) =>
-    'Assiette : ' + eur.format(n(pts(r)) * n(r.ValeurPoint) * n(r.Quotite)) + ' € (points × valeur du point × quotité)';
+  const assiette = (pts, vide) => (r) =>
+    n(pts(r)) > 0
+      ? 'Assiette : ' + eur.format(n(pts(r)) * n(r.ValeurPoint) * n(r.Quotite)) + ' € (points × valeur du point × quotité)'
+      : '⚠ ' + vide;
 
   // ---- éléments communs ----------------------------------------------------
   const IHTS_SUB = [
@@ -173,16 +175,19 @@
 
   const pcDeductions = [
     L('Pension civile', {
-      hint: assiette((r) => r.IndicePC),
-      base: I('IndicePC', 'int', { unit: 'pts' }),
+      hint: assiette((r) => r.IndicePC, 'indice pension civile à 0 : aucune cotisation (saisir l’indice ou reprendre l’indice majoré)'),
+      base: I('IndicePC', 'int', { unit: 'pts', fillFrom: 'IndiceRem' }),
       taux: Bt('PensionCivileSal'), ded: K('PensionCivile'),
     }),
     L('Pension civile sur NBI', {
-      hint: assiette((r) => r.NbiPoints),
+      hint: assiette((r) => r.NbiPoints, 'aucun point de NBI saisi (rubrique Rémunération)'),
       base: Fn((r) => r.NbiPoints, 'int'),
       taux: Bt('PensionCivileSal'), ded: K('PensionCivileNbi'),
     }),
-    L('Pension civile sur IMT', { hint: 'Assiette : montant de l’IMT', base: K('Imt'), taux: Bt('TauxPcImt'), ded: K('PensionCivileImt') }),
+    L('Pension civile sur IMT', {
+      hint: (r) => (r.ImtOui ? 'Assiette : montant de l’IMT' : '⚠ IMT non cochée (rubrique Rémunération)'),
+      base: K('Imt'), taux: Bt('TauxPcImt'), ded: K('PensionCivileImt'),
+    }),
   ];
 
   const lignesImt = (montantKey) => L('Indemnité mensuelle de technicité (IMT)', {
@@ -270,12 +275,12 @@
       ligneAvantageNature(false),
       SEC('Retenues'),
       L('CNRACL', {
-        hint: assiette((r) => r.IndicePC),
-        base: I('IndicePC', 'int', { unit: 'pts' }),
+        hint: assiette((r) => r.IndicePC, 'indice CNRACL à 0 : aucune cotisation (saisir l’indice ou reprendre l’indice majoré)'),
+        base: I('IndicePC', 'int', { unit: 'pts', fillFrom: 'IndiceRem' }),
         taux: Fn((r, b) => (r.Statut === '4' ? 0 : b.CnraclSal), 'pct'), ded: K('Cnracl'),
       }),
       L('CNRACL sur NBI', {
-        hint: assiette((r) => r.NbiPoints),
+        hint: assiette((r) => r.NbiPoints, 'aucun point de NBI saisi (rubrique Rémunération)'),
         base: Fn((r) => r.NbiPoints, 'int'),
         taux: Fn((r, b) => (r.Statut === '4' ? 0 : b.CnraclSal), 'pct'), ded: K('CnraclNbi'),
       }),
