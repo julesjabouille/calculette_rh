@@ -25,6 +25,10 @@
   const TOT = (label, o = {}) => ({ total: true, label, ...o });
 
   const n = (x) => (typeof x === 'number' && isFinite(x) ? x : 0);
+  const eur = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // assiette mensuelle = points × valeur du point × quotité
+  const assiette = (pts) => (r) =>
+    'Assiette : ' + eur.format(n(pts(r)) * n(r.ValeurPoint) * n(r.Quotite)) + ' € (points × valeur du point × quotité)';
 
   // ---- éléments communs ----------------------------------------------------
   const IHTS_SUB = [
@@ -36,7 +40,7 @@
     I('Ihts6', 'num', { label: 'Dim./férié > 14 h' }),
   ];
 
-  const ligneBrut = L('Traitement indiciaire brut', {
+  const ligneBrut = L('Indice majoré', {
     hint: 'indice × valeur du point × quotité',
     base: I('IndiceRem', 'int', { unit: 'pts' }),
     taux: Fn((r) => r.ValeurPoint, 'rate'),
@@ -169,14 +173,16 @@
 
   const pcDeductions = [
     L('Pension civile', {
-      base: Fn((r) => n(r.IndicePC) * n(r.ValeurPoint) * n(r.Quotite)),
+      hint: assiette((r) => r.IndicePC),
+      base: I('IndicePC', 'int', { unit: 'pts' }),
       taux: Bt('PensionCivileSal'), ded: K('PensionCivile'),
     }),
     L('Pension civile sur NBI', {
-      base: Fn((r) => n(r.NbiPoints) * n(r.ValeurPoint) * n(r.Quotite)),
+      hint: assiette((r) => r.NbiPoints),
+      base: Fn((r) => r.NbiPoints, 'int'),
       taux: Bt('PensionCivileSal'), ded: K('PensionCivileNbi'),
     }),
-    L('Pension civile sur IMT', { base: K('Imt'), taux: Bt('TauxPcImt'), ded: K('PensionCivileImt') }),
+    L('Pension civile sur IMT', { hint: 'Assiette : montant de l’IMT', base: K('Imt'), taux: Bt('TauxPcImt'), ded: K('PensionCivileImt') }),
   ];
 
   const lignesImt = (montantKey) => L('Indemnité mensuelle de technicité (IMT)', {
@@ -207,7 +213,6 @@
     situation: [
       { cell: I('Nom', 'text'), label: 'Nom', wide: true },
       { cell: I('Statut', 'choice'), label: 'Statut' },
-      { cell: I('IndicePC', 'int'), label: 'Indice pension civile' },
       { cell: I('Quotite', 'num'), label: 'Quotité' },
       { cell: I('Mil1an', 'bool', { caption: 'Mil1an' }), label: 'Option' },
     ],
@@ -248,7 +253,6 @@
     situation: [
       { cell: I('Nom', 'text'), label: 'Nom', wide: true },
       { cell: I('Statut', 'choice'), label: 'Statut' },
-      { cell: I('IndicePC', 'int'), label: 'Indice CNRACL' },
       { cell: I('Quotite', 'num'), label: 'Quotité' },
       { cell: I('Mil1an', 'bool', { caption: 'Mil1an' }), label: 'Option' },
     ],
@@ -266,11 +270,13 @@
       ligneAvantageNature(false),
       SEC('Retenues'),
       L('CNRACL', {
-        base: Fn((r) => n(r.IndicePC) * n(r.ValeurPoint) * n(r.Quotite)),
+        hint: assiette((r) => r.IndicePC),
+        base: I('IndicePC', 'int', { unit: 'pts' }),
         taux: Fn((r, b) => (r.Statut === '4' ? 0 : b.CnraclSal), 'pct'), ded: K('Cnracl'),
       }),
       L('CNRACL sur NBI', {
-        base: Fn((r) => n(r.NbiPoints) * n(r.ValeurPoint) * n(r.Quotite)),
+        hint: assiette((r) => r.NbiPoints),
+        base: Fn((r) => r.NbiPoints, 'int'),
         taux: Fn((r, b) => (r.Statut === '4' ? 0 : b.CnraclSal), 'pct'), ded: K('CnraclNbi'),
       }),
       ...csgLines(),
@@ -317,7 +323,6 @@
     situation: [
       { cell: I('Nom', 'text'), label: 'Nom', wide: true },
       { cell: I('Statut', 'choice'), label: 'Statut' },
-      { cell: I('IndicePC', 'int'), label: 'Indice pension civile' },
       { cell: I('Quotite', 'num'), label: 'Quotité' },
       { cell: I('Mil1an', 'bool', { caption: 'Mil1an' }), label: 'Option' },
       { cell: I('Parlementaire', 'bool', { caption: 'Parlementaire' }), label: 'Option' },
