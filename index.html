@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculette RH – Fiche de paie</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- API des widgets personnalisés Grist -->
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="toolbar" class="toolbar" hidden>
+      <select id="recSelect" title="Ligne de la table affichée dans la fiche"></select>
+      <button id="btnNew" type="button" title="Ajouter une ligne dans la table">+ Nouvelle</button>
+      <button id="btnCopy" type="button" title="Dupliquer la ligne courante">Dupliquer</button>
+      <button id="btnDelete" type="button" class="danger" title="Supprimer la ligne courante">Supprimer</button>
+      <label class="toggle"><input type="checkbox" id="hideZero"> Masquer les lignes à zéro</label>
+      <span id="status" class="status" role="status"></span>
+      <button id="btnPrint" type="button" class="ghost">Imprimer</button>
+    </div>
+    <p id="empty" class="empty">En attente des données Grist…</p>
+    <main id="sheet"></main>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
